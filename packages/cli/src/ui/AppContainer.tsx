@@ -1934,7 +1934,14 @@ Logging in with Google... Restarting Gemini CLI to continue.
       streamingState,
       thoughtSubject: thought?.subject,
       isConfirming:
-        !!commandConfirmationRequest || shouldShowActionRequiredTitle,
+        !!commandConfirmationRequest ||
+        shouldShowActionRequiredTitle ||
+        !!proQuotaRequest ||
+        !!validationRequest ||
+        !!authConsentRequest ||
+        !!customDialog ||
+        !!loopDetectionConfirmationRequest ||
+        confirmUpdateExtensionRequests.length > 0,
       isSilentWorking: shouldShowSilentWorkingTitle,
       folderName: basename(config.getTargetDir()),
       showThoughts: !!settings.merged.ui.showStatusInTitle,
@@ -1953,6 +1960,12 @@ Logging in with Google... Restarting Gemini CLI to continue.
     commandConfirmationRequest,
     shouldShowActionRequiredTitle,
     shouldShowSilentWorkingTitle,
+    proQuotaRequest,
+    validationRequest,
+    authConsentRequest,
+    customDialog,
+    loopDetectionConfirmationRequest,
+    confirmUpdateExtensionRequests,
     settings.merged.ui.showStatusInTitle,
     settings.merged.ui.dynamicWindowTitle,
     settings.merged.ui.hideWindowTitle,

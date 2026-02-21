@@ -2109,6 +2109,56 @@ describe('AppContainer State Management', () => {
       );
       unmount();
     });
+
+    it('should show Action Required in terminal title when proQuotaRequest is active during responding state', () => {
+      // Arrange: Set up mock settings with dynamic title enabled
+      const defaultMergedSettings = mergeSettings({}, {}, {}, {}, true);
+      const mockSettingsWithTitleEnabled = {
+        ...mockSettings,
+        merged: {
+          ...defaultMergedSettings,
+          ui: {
+            ...defaultMergedSettings.ui,
+            showStatusInTitle: true,
+            hideWindowTitle: false,
+          },
+        },
+      } as unknown as LoadedSettings;
+
+      // Mock the streaming state as Responding (would normally show "Working…")
+      mockedUseGeminiStream.mockReturnValue({
+        ...DEFAULT_GEMINI_STREAM_MOCK,
+        streamingState: 'responding',
+        thought: { subject: 'Some thought' },
+      });
+
+      // Mock an active proQuotaRequest (high demand dialog)
+      mockedUseQuotaAndFallback.mockReturnValue({
+        proQuotaRequest: {
+          failedModel: 'gemini-pro',
+          fallbackModel: 'gemini-flash',
+          resolve: vi.fn(),
+        },
+        handleProQuotaChoice: vi.fn(),
+      });
+
+      // Act: Render the container
+      const { unmount } = renderAppContainer({
+        settings: mockSettingsWithTitleEnabled,
+      });
+
+      // Assert: Terminal title should show "Action Required" instead of "Working…"
+      const titleWrites = mocks.mockStdout.write.mock.calls.filter((call) =>
+        call[0].includes('\x1b]0;'),
+      );
+
+      expect(titleWrites.length).toBeGreaterThanOrEqual(1);
+      const lastTitle = titleWrites[titleWrites.length - 1][0];
+      expect(lastTitle).toContain('✋  Action Required');
+      expect(lastTitle).not.toContain('Working…');
+
+      unmount();
+    });
   });
 
   describe('Queue Error Message', () => {
